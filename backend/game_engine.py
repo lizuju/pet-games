@@ -2,6 +2,7 @@ from typing import Any, Dict, Tuple
 
 import time
 
+from errors import ActionError
 from actions import (
     ActionContext,
     ActionRegistry,
@@ -313,6 +314,7 @@ class GameEngine:
             "level": int(safe.get("level", 1)),
             "staff_count": int(safe.get("staff_count", 0)),
             "max_staff": int(safe.get("max_staff", 15)),
+            "rev": int(safe.get("rev", 0)),
             "game_data": {
                 **game_data,
                 "money_rate": float(game_data.get("money_rate", 0.0)),
@@ -517,6 +519,6 @@ class GameEngine:
         payload = payload or {}
         handler = self.registry.get(action_type)
         if not handler:
-            return state
+            raise ActionError(400, "Unknown action type")
         context = ActionContext(engine=self, state=state, now=now, payload=payload)
         return handler.apply(context)

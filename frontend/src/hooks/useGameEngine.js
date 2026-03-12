@@ -45,7 +45,19 @@ export const useGameEngine = () => {
       setActionBusy(true);
 
       const run = async () => {
-        const updated = await applyPlayerAction(playerId, action);
+        const actionPayload = {
+          ...action,
+          client_rev: state?.rev ?? 0,
+        };
+        const updated = await applyPlayerAction(playerId, actionPayload);
+        if (updated?.conflict) {
+          const serverState = updated?.data?.current_state;
+          if (serverState) {
+            setState(normalizeState(serverState));
+            lastSaveRef.current = Date.now();
+          }
+          return;
+        }
         const normalized = normalizeState(updated);
         setState(normalized);
         lastSaveRef.current = Date.now();

@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, TYPE_CHECKING
 
+from errors import ActionError
+
 if TYPE_CHECKING:
     from actions import ActionContext
 
@@ -23,25 +25,25 @@ class UpgradePolicy:
     def apply(self, ctx: ActionContext) -> Dict:
         cooldowns = ctx.state["game_data"].get("upgrade_cooldowns", {})
         if ctx.now < float(cooldowns.get(self.cooldown_key, 0)):
-            return ctx.state
+            raise ActionError(409, "Upgrade cooldown active")
 
         item = ctx.engine.get_upgradeable(self.category, ctx.payload.get("id"))
         if not item:
-            return ctx.state
+            raise ActionError(404, "Upgradeable item not found")
 
         levels_key = LEVELS_KEY[self.category]
         levels = ctx.state["game_data"].get(levels_key, {})
         current_level = int(levels.get(item.id, 0))
         if current_level >= item.max_level:
-            return ctx.state
+            raise ActionError(409, "Already at max level")
 
         cost = ctx.engine.next_cost(item, current_level)
         if ctx.state["money"] < cost:
-            return ctx.state
+            raise ActionError(400, "Not enough money")
 
         if self.affects_staff_count and current_level == 0:
             if ctx.state["staff_count"] >= ctx.state["max_staff"]:
-                return ctx.state
+                raise ActionError(409, "Staff limit reached")
 
         ctx.state["money"] -= cost
 

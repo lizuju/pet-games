@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from game_engine import GameEngine
 
 from policies import UpgradePolicy
+from errors import ActionError
 
 
 @dataclass
@@ -39,8 +40,8 @@ class CollectAction:
     action_type = "collect"
 
     def apply(self, ctx: ActionContext) -> Dict[str, Any]:
-        gain = float(ctx.payload.get("amount", 0.1))
-        xp_gain = float(ctx.payload.get("xp", 0.005))
+        gain = 0.01
+        xp_gain = 0.005
         ctx.state["money"] += gain
         ctx.state["game_data"]["xp"] += xp_gain
         return ctx.engine.apply_leveling(ctx.state)
@@ -50,8 +51,8 @@ class CollectFishAction:
     action_type = "collect_fish"
 
     def apply(self, ctx: ActionContext) -> Dict[str, Any]:
-        gain = float(ctx.payload.get("amount", 0.1))
-        xp_gain = float(ctx.payload.get("xp", 0.002))
+        gain = 0.01
+        xp_gain = 0.002
         ctx.state["fish"] += gain
         ctx.state["game_data"]["xp"] += xp_gain
         return ctx.engine.apply_leveling(ctx.state)
@@ -91,9 +92,9 @@ class BuyShopAction:
     def apply(self, ctx: ActionContext) -> Dict[str, Any]:
         item = ctx.engine.get_shop_item(ctx.payload.get("id"))
         if not item:
-            return ctx.state
+            raise ActionError(404, "Shop item not found")
         if ctx.state["money"] < item.cost_money:
-            return ctx.state
+            raise ActionError(400, "Not enough money")
         ctx.state["money"] -= item.cost_money
         ctx.state["fish"] += item.fish_reward
         return ctx.engine.apply_leveling(ctx.state)
@@ -105,12 +106,12 @@ class CompleteTaskAction:
     def apply(self, ctx: ActionContext) -> Dict[str, Any]:
         item = ctx.engine.get_task(ctx.payload.get("id"))
         if not item:
-            return ctx.state
+            raise ActionError(404, "Task not found")
         tasks_status = ctx.state["game_data"].get("tasks_status", {})
         if tasks_status.get(item.id, {}).get("done"):
-            return ctx.state
+            raise ActionError(409, "Task already completed")
         if not ctx.engine.task_requirements_met(ctx.state, item):
-            return ctx.state
+            raise ActionError(400, "Task requirements not met")
         ctx.state["money"] += item.reward_money
         ctx.state["game_data"]["xp"] += item.reward_xp
         tasks_status[item.id] = {"done": True}

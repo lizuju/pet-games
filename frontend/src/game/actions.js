@@ -1,11 +1,11 @@
-export const collectAction = (amount = 0.01, xp = 0.005) => ({
+export const collectAction = () => ({
   type: 'collect',
-  payload: { amount, xp },
+  payload: {},
 });
 
-export const collectFishAction = (amount = 0.01, xp = 0.002) => ({
+export const collectFishAction = () => ({
   type: 'collect_fish',
-  payload: { amount, xp },
+  payload: {},
 });
 
 export const upgradeDeskAction = (id) => ({

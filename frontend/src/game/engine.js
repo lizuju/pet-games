@@ -27,6 +27,7 @@ const DEFAULT_STATE = {
   level: 1,
   staff_count: 0,
   max_staff: 15,
+  rev: 0,
   game_data: DEFAULT_GAME_DATA,
 };
 
@@ -46,6 +47,7 @@ export const normalizeState = (state) => {
     level: Number(safe.level ?? DEFAULT_STATE.level),
     staff_count: Number(safe.staff_count ?? DEFAULT_STATE.staff_count),
     max_staff: Number(safe.max_staff ?? DEFAULT_STATE.max_staff),
+    rev: Number(safe.rev ?? DEFAULT_STATE.rev),
     game_data: {
       ...gameData,
       money_rate: Number(gameData.money_rate ?? DEFAULT_GAME_DATA.money_rate),

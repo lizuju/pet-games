@@ -14,7 +14,6 @@ const HomePage = () => {
   const [activeTab, setActiveTab] = useState('');
   const {
     state,
-    dispatch,
     runServerAction,
     loading,
     error,
@@ -42,20 +41,17 @@ const HomePage = () => {
 
   const handlePrimaryAction = () => {
     if (loading) return;
-    const autoSave = Boolean(state.game_data?.settings?.auto_save ?? true);
-    dispatch(collectAction(0.01, 0.005), { saveNow: autoSave });
+    runServerAction(collectAction());
   };
 
   const handleMoneyClick = () => {
     if (loading) return;
-    const autoSave = Boolean(state.game_data?.settings?.auto_save ?? true);
-    dispatch(collectAction(0.01, 0.002), { saveNow: autoSave });
+    runServerAction(collectAction());
   };
 
   const handleFishClick = () => {
     if (loading) return;
-    const autoSave = Boolean(state.game_data?.settings?.auto_save ?? true);
-    dispatch(collectFishAction(0.01, 0.002), { saveNow: autoSave });
+    runServerAction(collectFishAction());
   };
 
   const handleCharacterClick = (id) => {

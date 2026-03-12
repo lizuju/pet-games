@@ -7,4 +7,6 @@ class PlayerState(BaseModel):
     level: int = 1
     staff_count: int = 0
     max_staff: int = 15
+    rev: int = 0
+    auth_token: Optional[str] = None
     game_data: Optional[Dict[str, Any]] = Field(default_factory=dict)

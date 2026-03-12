@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getPlayerState, savePlayerState } from '../api/playerApi';
+import { getPlayerState, savePlayerState, setPlayerToken } from '../api/playerApi';
 
 const DEFAULT_STATE = {
   money: 0,
@@ -7,6 +7,7 @@ const DEFAULT_STATE = {
   level: 1,
   staff_count: 0,
   max_staff: 15,
+  rev: 0,
   game_data: {},
 };
 
@@ -34,7 +35,11 @@ export const usePlayerState = () => {
     getPlayerState(playerId)
       .then((data) => {
         if (!isMounted) return;
-        setState({ ...DEFAULT_STATE, ...data });
+        if (data?.auth_token) {
+          setPlayerToken(data.auth_token);
+        }
+        const { auth_token: _token, ...rest } = data || {};
+        setState({ ...DEFAULT_STATE, ...rest });
       })
       .catch((err) => {
         if (!isMounted) return;
@@ -60,7 +65,14 @@ export const usePlayerState = () => {
       const controller = new AbortController();
       inflight.current = controller;
       try {
-        await savePlayerState(playerId, nextState, controller.signal);
+        const result = await savePlayerState(playerId, nextState, controller.signal);
+        if (result?.conflict) {
+          const serverState = result?.data?.current_state;
+          if (serverState) {
+            setState(serverState);
+          }
+          return;
+        }
       } catch (err) {
         if (controller.signal.aborted) return;
         setError(err?.message || 'Failed to save');
