@@ -1,11 +1,17 @@
 import { customStyles } from '../../styles/customStyles';
 
-const CharacterDevCat = ({ onClick }) => {
+const CharacterDevCat = ({ onClick, pinged }) => {
   return (
     <div
       onClick={onClick}
-      className="absolute top-[35%] left-[5%] w-32 flex flex-col items-center z-20 cursor-pointer"
+      className={`absolute top-[35%] left-[5%] w-32 flex flex-col items-center z-20 cursor-pointer idle-float idle-wiggle ${pinged ? 'scale-105' : ''}`}
+      style={{ animationDelay: '0.8s' }}
     >
+      {pinged && (
+        <div className="absolute -top-3 right-2 bg-slate-800 text-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+          +fish
+        </div>
+      )}
       <div className="absolute -top-8 flex flex-col items-center">
         <div className="bg-slate-800 text-white px-2 py-0.5 rounded shadow-sm text-[10px] font-mono mb-1" style={customStyles.particleFloat}>{'code'}</div>
       </div>

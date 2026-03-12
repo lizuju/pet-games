@@ -10,12 +10,13 @@ const GameWorld = ({
   boostRemaining,
   cooldownRemaining,
   cooldownActive,
+  activePing,
 }) => {
   return (
     <div className="relative flex-1 w-full overflow-hidden z-10">
-      <CharacterCeoCat onClick={() => onCharacterClick('ceo')} />
-      <CharacterDevCat onClick={() => onCharacterClick('dev')} />
-      <CharacterDesignerCat onClick={() => onCharacterClick('designer')} />
+      <CharacterCeoCat onClick={() => onCharacterClick('ceo')} pinged={activePing === 'ceo'} />
+      <CharacterDevCat onClick={() => onCharacterClick('dev')} pinged={activePing === 'dev'} />
+      <CharacterDesignerCat onClick={() => onCharacterClick('designer')} pinged={activePing === 'designer'} />
       <Plant
         onClick={() => onCharacterClick('cactus')}
         onRestClick={onRestClick}
@@ -23,6 +24,7 @@ const GameWorld = ({
         boostRemaining={boostRemaining}
         cooldownRemaining={cooldownRemaining}
         cooldownActive={cooldownActive}
+        pinged={activePing === 'cactus'}
       />
     </div>
   );

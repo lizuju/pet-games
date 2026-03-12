@@ -5,6 +5,7 @@ const DEFAULT_GAME_DATA = {
   xp_to_next: 50,
   level_progress: 0,
   tasks_status: {},
+  achievements_status: {},
   desk_level: 0,
   staff_levels: {},
   skill_levels: {},
@@ -18,6 +19,12 @@ const DEFAULT_GAME_DATA = {
     desks: 0,
     staff: 0,
     skills: 0,
+  },
+  interaction_cooldowns: {
+    ceo: 0,
+    dev: 0,
+    designer: 0,
+    cactus: 0,
   },
 };
 
@@ -58,6 +65,7 @@ export const normalizeState = (state) => {
       desk_level: Number(gameData.desk_level ?? DEFAULT_GAME_DATA.desk_level),
       staff_levels: gameData.staff_levels ?? DEFAULT_GAME_DATA.staff_levels,
       skill_levels: gameData.skill_levels ?? DEFAULT_GAME_DATA.skill_levels,
+      achievements_status: gameData.achievements_status ?? DEFAULT_GAME_DATA.achievements_status,
       settings: {
         auto_save: Boolean(gameData.settings?.auto_save ?? DEFAULT_GAME_DATA.settings.auto_save),
         offline_income: Boolean(gameData.settings?.offline_income ?? DEFAULT_GAME_DATA.settings.offline_income),
@@ -65,6 +73,7 @@ export const normalizeState = (state) => {
       last_pet_care: gameData.last_pet_care ?? DEFAULT_GAME_DATA.last_pet_care,
       last_plant_care: gameData.last_plant_care ?? DEFAULT_GAME_DATA.last_plant_care,
       upgrade_cooldowns: gameData.upgrade_cooldowns ?? DEFAULT_GAME_DATA.upgrade_cooldowns,
+      interaction_cooldowns: gameData.interaction_cooldowns ?? DEFAULT_GAME_DATA.interaction_cooldowns,
     },
   };
 };

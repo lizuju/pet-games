@@ -1,9 +1,15 @@
-const Plant = ({ onClick, onRestClick, resting, cooldownRemaining, boostRemaining, cooldownActive }) => {
+const Plant = ({ onClick, onRestClick, resting, cooldownRemaining, boostRemaining, cooldownActive, pinged }) => {
   return (
     <div
       onClick={onClick}
-      className="absolute top-[65%] left-[25%] z-20 flex flex-col items-center cursor-pointer"
+      className={`absolute top-[65%] left-[25%] z-20 flex flex-col items-center cursor-pointer idle-float ${pinged ? 'scale-105' : ''}`}
+      style={{ animationDelay: '1.6s' }}
     >
+      {pinged && (
+        <div className="absolute -top-4 left-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+          Zen
+        </div>
+      )}
       <div className="relative w-16 h-24">
         <div className="absolute top-0 left-2 w-8 h-12 bg-emerald-400 rounded-full rounded-bl-none transform -rotate-45 shadow-sm"></div>
         <div className="absolute top-2 right-1 w-6 h-10 bg-emerald-500 rounded-full rounded-br-none transform rotate-45 shadow-sm"></div>

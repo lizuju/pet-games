@@ -4,6 +4,7 @@ import { applyAction, normalizeState, tick } from '../game/engine';
 import { usePlayerState } from './usePlayerState';
 
 const SAVE_INTERVAL_MS = 5000;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 export const useGameEngine = () => {
   const { state: serverState, save, loading, error: loadError, playerId } = usePlayerState();
@@ -12,6 +13,7 @@ export const useGameEngine = () => {
   const [restBoostUntil, setRestBoostUntil] = useState(0);
   const [restCooldownUntil, setRestCooldownUntil] = useState(0);
   const [state, setState] = useState(() => normalizeState(serverState));
+  const stateRef = useRef(state);
   const hydratedRef = useRef(false);
   const lastSaveRef = useRef(0);
   const actionQueueRef = useRef(Promise.resolve());
@@ -19,10 +21,16 @@ export const useGameEngine = () => {
 
   useEffect(() => {
     if (!loading) {
-      setState(normalizeState(serverState));
+      const next = normalizeState(serverState);
+      setState(next);
+      stateRef.current = next;
       hydratedRef.current = true;
     }
   }, [loading, serverState]);
+  
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const persistIfDue = useCallback(
     (nextState, force = false) => {
@@ -45,10 +53,11 @@ export const useGameEngine = () => {
       setActionBusy(true);
 
       const run = async () => {
-        const actionPayload = {
-          ...action,
-          client_rev: state?.rev ?? 0,
-        };
+      const currentState = stateRef.current || state;
+      const actionPayload = {
+        ...action,
+        client_rev: currentState?.rev ?? 0,
+      };
         const updated = await applyPlayerAction(playerId, actionPayload);
         if (updated?.conflict) {
           const serverState = updated?.data?.current_state;
@@ -97,6 +106,50 @@ export const useGameEngine = () => {
 
     return () => clearInterval(interval);
   }, [loading, persistIfDue, actionBusy, restBoostUntil]);
+
+  useEffect(() => {
+    const renderGameToText = () => {
+      const safe = normalizeState(state);
+      const payload = {
+        mode: 'idle',
+        coords: { origin: 'top-left', x: 'right', y: 'down' },
+        stats: {
+          money: safe.money,
+          fish: safe.fish,
+          level: safe.level,
+          staff_count: safe.staff_count,
+          max_staff: safe.max_staff,
+          money_rate: safe.game_data?.money_rate,
+          fish_rate: safe.game_data?.fish_rate,
+          xp: safe.game_data?.xp,
+          xp_to_next: safe.game_data?.xp_to_next,
+        },
+        achievements: safe.game_data?.achievements_status || {},
+        tasks: safe.game_data?.tasks_status || {},
+        api_base: API_BASE,
+      };
+      return JSON.stringify(payload);
+    };
+
+    const advanceTime = (ms) => {
+      const steps = Math.max(1, Math.round(Number(ms || 0) / (1000 / 60)));
+      setState((prev) => {
+        let next = prev;
+        for (let i = 0; i < steps; i += 1) {
+          next = tick(next, 1 / 60);
+        }
+        persistIfDue(next, false);
+        return next;
+      });
+    };
+
+    window.render_game_to_text = renderGameToText;
+    window.advanceTime = advanceTime;
+    return () => {
+      delete window.render_game_to_text;
+      delete window.advanceTime;
+    };
+  }, [state, persistIfDue]);
 
   const dispatch = useCallback(
     (action, options = {}) => {

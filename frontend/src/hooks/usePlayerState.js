@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getPlayerState, savePlayerState, setPlayerToken } from '../api/playerApi';
+import { getPlayerState, savePlayerState, setPlayerToken, getPlayerToken } from '../api/playerApi';
 
 const DEFAULT_STATE = {
   money: 0,
@@ -59,6 +59,9 @@ export const usePlayerState = () => {
     async (nextState) => {
       setState(nextState);
       setError('');
+      if (!getPlayerToken()) {
+        return;
+      }
       if (inflight.current) {
         inflight.current.abort();
       }

@@ -1,12 +1,18 @@
 import { Crown, Star } from '@phosphor-icons/react';
 import { customStyles } from '../../styles/customStyles';
 
-const CharacterCeoCat = ({ onClick }) => {
+const CharacterCeoCat = ({ onClick, pinged }) => {
   return (
     <div
       onClick={onClick}
-      className="absolute top-[10%] left-1/2 -translate-x-1/2 w-40 flex flex-col items-center z-10 cursor-pointer"
+      className={`absolute top-[10%] left-1/2 -translate-x-1/2 w-40 flex flex-col items-center z-10 cursor-pointer idle-float ${pinged ? 'scale-105' : ''}`}
+      style={{ animationDelay: '0.2s' }}
     >
+      {pinged && (
+        <div className="absolute -top-2 right-6 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+          Nice!
+        </div>
+      )}
       <div className="absolute -top-10 flex flex-col items-center">
         <div className="bg-emerald-100 px-2 py-0.5 rounded-full text-emerald-600 text-xs font-black shadow-sm border border-emerald-200 mb-1" style={customStyles.particleFloat}>+$50</div>
         <div className="bg-emerald-100 px-2 py-0.5 rounded-full text-emerald-600 text-xs font-black shadow-sm border border-emerald-200" style={customStyles.particleFloat2}>+$50</div>

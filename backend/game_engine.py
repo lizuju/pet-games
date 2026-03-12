@@ -11,8 +11,10 @@ from actions import (
     CarePlantAction,
     CollectAction,
     CollectFishAction,
+    ClaimAchievementAction,
     CompleteTaskAction,
     HireStaffAction,
+    InteractCharacterAction,
     UpdateSettingsAction,
     UpgradeDeskAction,
     UpgradeSkillAction,
@@ -50,6 +52,8 @@ class GameEngine:
             "staff_levels": {},
             "skill_levels": {},
             "tasks_status": {},
+            "achievements_status": {},
+            "interaction_cooldowns": {},
             "last_tick": None,
             "last_pet_care": None,
             "last_plant_care": None,
@@ -68,6 +72,7 @@ class GameEngine:
         self.decay_step_seconds = 30 * 60
         self.decay_max_steps = 12
         self.upgrade_cooldown_seconds = 30 * 60
+        self.interaction_cooldown_seconds = 5
         self.registry = ActionRegistry()
         self._register_actions()
         self.upgrade_cooldown_seconds = 30 * 60
@@ -195,6 +200,48 @@ class GameEngine:
                     "requires": {"skill_level": 1},
                 },
             ],
+            "achievements": [
+                {
+                    "id": "ach_first_steps",
+                    "name": "First Steps",
+                    "description": "Reach level 2.",
+                    "reward_money": 50,
+                    "reward_xp": 10,
+                    "requires": {"level": 2},
+                },
+                {
+                    "id": "ach_desk_starter",
+                    "name": "Desk Starter",
+                    "description": "Upgrade any desk to level 1.",
+                    "reward_money": 60,
+                    "reward_xp": 12,
+                    "requires": {"desk_level": 1},
+                },
+                {
+                    "id": "ach_team_builder",
+                    "name": "Team Builder",
+                    "description": "Hire your first staff member.",
+                    "reward_money": 75,
+                    "reward_xp": 15,
+                    "requires": {"staff_count": 1},
+                },
+                {
+                    "id": "ach_skill_learner",
+                    "name": "Skill Learner",
+                    "description": "Upgrade a skill to level 1.",
+                    "reward_money": 80,
+                    "reward_xp": 18,
+                    "requires": {"skill_level": 1},
+                },
+                {
+                    "id": "ach_fish_hoarder",
+                    "name": "Fish Hoarder",
+                    "description": "Hold 100 fish at once.",
+                    "reward_money": 90,
+                    "reward_xp": 20,
+                    "requires": {"fish": 100},
+                },
+            ],
         }
         self._build_entities()
 
@@ -207,9 +254,11 @@ class GameEngine:
         self.registry.register(UpgradeSkillAction())
         self.registry.register(BuyShopAction())
         self.registry.register(CompleteTaskAction())
+        self.registry.register(ClaimAchievementAction())
         self.registry.register(UpdateSettingsAction())
         self.registry.register(CarePetAction())
         self.registry.register(CarePlantAction())
+        self.registry.register(InteractCharacterAction())
 
     def _build_entities(self) -> None:
         self.desks: Dict[str, UpgradeableEntity] = {}
@@ -284,6 +333,8 @@ class GameEngine:
         game_data = {**self.default_game_data, **safe.get("game_data", {})}
         tasks_status = game_data.get("tasks_status") or {}
         game_data["tasks_status"] = tasks_status
+        achievements_status = game_data.get("achievements_status") or {}
+        game_data["achievements_status"] = achievements_status
         desk_levels = game_data.get("desk_levels") or {}
         if not desk_levels and int(game_data.get("desk_level", 0)) > 0:
             desk_levels["desk_basic"] = int(game_data.get("desk_level", 0))
@@ -307,6 +358,13 @@ class GameEngine:
             "staff": float(cooldowns.get("staff", 0)),
             "skills": float(cooldowns.get("skills", 0)),
         }
+        interaction_cooldowns = game_data.get("interaction_cooldowns") or {}
+        game_data["interaction_cooldowns"] = {
+            "ceo": float(interaction_cooldowns.get("ceo", 0)),
+            "dev": float(interaction_cooldowns.get("dev", 0)),
+            "designer": float(interaction_cooldowns.get("designer", 0)),
+            "cactus": float(interaction_cooldowns.get("cactus", 0)),
+        }
 
         return {
             "money": float(safe.get("money", 0.0)),
@@ -326,10 +384,13 @@ class GameEngine:
                 "desk_levels": desk_levels,
                 "staff_levels": staff_levels,
                 "skill_levels": skill_levels,
+                "tasks_status": tasks_status,
+                "achievements_status": achievements_status,
                 "last_tick": game_data.get("last_tick"),
                 "last_pet_care": game_data.get("last_pet_care"),
                 "last_plant_care": game_data.get("last_plant_care"),
                 "upgrade_cooldowns": game_data["upgrade_cooldowns"],
+                "interaction_cooldowns": game_data["interaction_cooldowns"],
                 "settings": game_data["settings"],
             },
         }
@@ -392,6 +453,32 @@ class GameEngine:
                 return False
         if "staff_count" in requires:
             if state.get("staff_count", 0) < int(requires["staff_count"]):
+                return False
+        if "skill_level" in requires:
+            levels = state["game_data"].get("skill_levels", {})
+            max_skill = max(levels.values(), default=0)
+            if max_skill < int(requires["skill_level"]):
+                return False
+        return True
+
+    def achievement_requirements_met(self, state: Dict[str, Any], achievement: Dict[str, Any]) -> bool:
+        requires = achievement.get("requires", {}) or {}
+        if "level" in requires:
+            if int(state.get("level", 1)) < int(requires["level"]):
+                return False
+        if "money" in requires:
+            if float(state.get("money", 0.0)) < float(requires["money"]):
+                return False
+        if "fish" in requires:
+            if float(state.get("fish", 0.0)) < float(requires["fish"]):
+                return False
+        if "desk_level" in requires:
+            desk_levels = state["game_data"].get("desk_levels", {})
+            max_desk = max(desk_levels.values(), default=state["game_data"].get("desk_level", 0))
+            if max_desk < int(requires["desk_level"]):
+                return False
+        if "staff_count" in requires:
+            if int(state.get("staff_count", 0)) < int(requires["staff_count"]):
                 return False
         if "skill_level" in requires:
             levels = state["game_data"].get("skill_levels", {})

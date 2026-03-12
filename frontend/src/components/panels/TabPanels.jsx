@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 import { useCatalog } from '../../hooks/useCatalog';
-import { buyShopAction, completeTaskAction, hireStaffAction, upgradeDeskAction, upgradeSkillAction } from '../../game/actions';
+import {
+  buyShopAction,
+  claimAchievementAction,
+  completeTaskAction,
+  hireStaffAction,
+  upgradeDeskAction,
+  upgradeSkillAction,
+} from '../../game/actions';
 
 const PanelShell = ({ title, children, onClose }) => {
   return (
@@ -15,7 +22,7 @@ const PanelShell = ({ title, children, onClose }) => {
             Close
           </button>
         </div>
-        <div className="p-4 flex flex-col gap-3 overflow-y-auto">
+        <div className="p-4 flex flex-col gap-3 overflow-y-auto" data-panel-scroll>
           {children}
         </div>
       </div>
@@ -54,8 +61,10 @@ const TabPanels = ({ activeTab, state, onServerAction, onClose }) => {
   const legacyDeskLevel = Number(state.game_data?.desk_level || 0);
   const upgradeCooldowns = state.game_data?.upgrade_cooldowns || {};
   const tasksStatus = state.game_data?.tasks_status || {};
+  const achievementsStatus = state.game_data?.achievements_status || {};
 
   const tasks = useMemo(() => catalog?.tasks || [], [catalog]);
+  const achievements = useMemo(() => catalog?.achievements || [], [catalog]);
   const desks = useMemo(() => catalog?.desks || [], [catalog]);
   const staff = useMemo(() => catalog?.staff || [], [catalog]);
   const shop = useMemo(() => catalog?.shop || [], [catalog]);
@@ -80,6 +89,20 @@ const TabPanels = ({ activeTab, state, onServerAction, onClose }) => {
 
   const requirementsMet = (task) => {
     const requires = task.requires || {};
+    if (typeof requires.desk_level === 'number' && maxDeskLevel < requires.desk_level) return false;
+    if (typeof requires.staff_count === 'number' && staffCount < requires.staff_count) return false;
+    if (typeof requires.skill_level === 'number') {
+      const maxSkill = Math.max(0, ...Object.values(skillLevels));
+      if (maxSkill < requires.skill_level) return false;
+    }
+    return true;
+  };
+
+  const achievementMet = (achievement) => {
+    const requires = achievement.requires || {};
+    if (typeof requires.level === 'number' && Number(state.level || 1) < requires.level) return false;
+    if (typeof requires.money === 'number' && Number(state.money || 0) < requires.money) return false;
+    if (typeof requires.fish === 'number' && Number(state.fish || 0) < requires.fish) return false;
     if (typeof requires.desk_level === 'number' && maxDeskLevel < requires.desk_level) return false;
     if (typeof requires.staff_count === 'number' && staffCount < requires.staff_count) return false;
     if (typeof requires.skill_level === 'number') {
@@ -149,6 +172,26 @@ const TabPanels = ({ activeTab, state, onServerAction, onClose }) => {
   if (activeTab === 'tasks') {
     return (
       <PanelShell title="Tasks" onClose={onClose}>
+        {achievements.length > 0 && (
+          <div className="flex items-center justify-between bg-amber-50 border border-amber-100 text-amber-700 text-[11px] font-semibold px-3 py-2 rounded-2xl">
+            <span>Achievements are below</span>
+            <button
+              className="text-amber-700 font-bold"
+              onClick={() => {
+                const container = document.querySelector('[data-panel-scroll]');
+                const anchor = document.querySelector('[data-achievements-anchor]');
+                if (container && anchor) {
+                  container.scrollTo({
+                    top: anchor.offsetTop - 8,
+                    behavior: 'smooth',
+                  });
+                }
+              }}
+            >
+              Jump
+            </button>
+          </div>
+        )}
         {tasks.map((task) => {
           const done = Boolean(tasksStatus[task.id]?.done);
           const canClaim = requirementsMet(task);
@@ -165,6 +208,33 @@ const TabPanels = ({ activeTab, state, onServerAction, onClose }) => {
             />
           );
         })}
+        {achievements.length > 0 && (
+          <>
+            <div className="h-2"></div>
+            <div
+              className="text-slate-500 text-[11px] font-bold uppercase tracking-wider"
+              data-achievements-anchor
+            >
+              Achievements
+            </div>
+            {achievements.map((achievement) => {
+              const claimed = Boolean(achievementsStatus[achievement.id]?.done);
+              const canClaim = achievementMet(achievement);
+              return (
+                <ActionRow
+                  key={achievement.id}
+                  title={achievement.name}
+                  description={achievement.description}
+                  reward={`$${achievement.reward_money} +${achievement.reward_xp} XP`}
+                  status={claimed ? 'Claimed' : canClaim ? 'Unlocked' : 'Locked'}
+                  cost={claimed ? 'Done' : canClaim ? 'Claim' : 'Locked'}
+                  disabled={claimed || !canClaim}
+                  onClick={() => onServerAction(claimAchievementAction(achievement.id))}
+                />
+              );
+            })}
+          </>
+        )}
       </PanelShell>
     );
   }

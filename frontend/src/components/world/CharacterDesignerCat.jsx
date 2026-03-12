@@ -1,12 +1,18 @@
 import { Heart, PaintBrush } from '@phosphor-icons/react';
 import { customStyles } from '../../styles/customStyles';
 
-const CharacterDesignerCat = ({ onClick }) => {
+const CharacterDesignerCat = ({ onClick, pinged }) => {
   return (
     <div
       onClick={onClick}
-      className="absolute top-[45%] right-[5%] w-32 flex flex-col items-center z-30 cursor-pointer"
+      className={`absolute top-[45%] right-[5%] w-32 flex flex-col items-center z-30 cursor-pointer idle-float ${pinged ? 'scale-105' : ''}`}
+      style={{ animationDelay: '1.1s' }}
     >
+      {pinged && (
+        <div className="absolute -top-3 left-6 bg-rose-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+          +XP
+        </div>
+      )}
       <div className="absolute -top-10 flex flex-col items-center">
         <div className="text-rose-400 text-lg drop-shadow-sm mb-1" style={customStyles.particleFloat}>
           <Heart size={18} weight="fill" className="text-rose-400" />

@@ -33,6 +33,11 @@ export const completeTaskAction = (id) => ({
   payload: { id },
 });
 
+export const claimAchievementAction = (id) => ({
+  type: 'claim_achievement',
+  payload: { id },
+});
+
 export const updateSettingsAction = (settings) => ({
   type: 'update_settings',
   payload: settings,
@@ -46,4 +51,9 @@ export const carePetAction = () => ({
 export const carePlantAction = () => ({
   type: 'care_plant',
   payload: {},
+});
+
+export const interactCharacterAction = (id) => ({
+  type: 'interact_character',
+  payload: { id },
 });

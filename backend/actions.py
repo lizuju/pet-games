@@ -119,6 +119,27 @@ class CompleteTaskAction:
         return ctx.engine.apply_leveling(ctx.state)
 
 
+class ClaimAchievementAction:
+    action_type = "claim_achievement"
+
+    def apply(self, ctx: ActionContext) -> Dict[str, Any]:
+        achievements = ctx.engine.get_catalog().get("achievements", [])
+        target_id = ctx.payload.get("id")
+        achievement = next((item for item in achievements if item.get("id") == target_id), None)
+        if not achievement:
+            raise ActionError(404, "Achievement not found")
+        achievements_status = ctx.state["game_data"].get("achievements_status", {})
+        if achievements_status.get(target_id, {}).get("done"):
+            raise ActionError(409, "Achievement already claimed")
+        if not ctx.engine.achievement_requirements_met(ctx.state, achievement):
+            raise ActionError(400, "Achievement requirements not met")
+        ctx.state["money"] += float(achievement.get("reward_money", 0))
+        ctx.state["game_data"]["xp"] += float(achievement.get("reward_xp", 0))
+        achievements_status[target_id] = {"done": True}
+        ctx.state["game_data"]["achievements_status"] = achievements_status
+        return ctx.engine.apply_leveling(ctx.state)
+
+
 class UpdateSettingsAction:
     action_type = "update_settings"
 
@@ -147,3 +168,31 @@ class CarePlantAction:
     def apply(self, ctx: ActionContext) -> Dict[str, Any]:
         ctx.state["game_data"]["last_plant_care"] = ctx.now
         return ctx.state
+
+
+class InteractCharacterAction:
+    action_type = "interact_character"
+
+    def apply(self, ctx: ActionContext) -> Dict[str, Any]:
+        character = ctx.payload.get("id")
+        if character not in ("ceo", "dev", "designer", "cactus"):
+            raise ActionError(404, "Character not found")
+        cooldowns = ctx.state["game_data"].get("interaction_cooldowns", {})
+        if ctx.now < float(cooldowns.get(character, 0)):
+            raise ActionError(409, "Character interaction cooldown")
+
+        if character == "ceo":
+            ctx.state["money"] += 0.12
+            ctx.state["game_data"]["xp"] += 0.01
+        elif character == "dev":
+            ctx.state["fish"] += 0.08
+            ctx.state["game_data"]["xp"] += 0.01
+        elif character == "designer":
+            ctx.state["game_data"]["xp"] += 0.05
+        else:
+            ctx.state["money"] += 0.06
+            ctx.state["game_data"]["xp"] += 0.008
+
+        cooldowns[character] = ctx.now + ctx.engine.interaction_cooldown_seconds
+        ctx.state["game_data"]["interaction_cooldowns"] = cooldowns
+        return ctx.engine.apply_leveling(ctx.state)

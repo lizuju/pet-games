@@ -3,10 +3,14 @@ import { useEffect } from 'react';
 const GlobalStyles = () => {
   useEffect(() => {
     const style = document.createElement('style');
+    const fontImport = import.meta.env.PROD
+      ? "@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');"
+      : '';
+    const fontFamily = import.meta.env.PROD ? "'Nunito', sans-serif" : "system-ui, -apple-system, sans-serif";
     style.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+      ${fontImport}
 
-      * { font-family: 'Nunito', sans-serif; }
+      * { font-family: ${fontFamily}; }
 
       @keyframes bounce-soft {
         0%, 100% { transform: translateY(0); }
@@ -31,6 +35,20 @@ const GlobalStyles = () => {
         70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
         100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
       }
+
+      @keyframes idle-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+
+      @keyframes idle-wiggle {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-1deg); }
+        75% { transform: rotate(1deg); }
+      }
+
+      .idle-float { animation: idle-float 3.6s ease-in-out infinite; }
+      .idle-wiggle { animation: idle-wiggle 4.4s ease-in-out infinite; }
 
       html, body, #root {
         width: 100%;
