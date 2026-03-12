@@ -7,8 +7,17 @@ const App = () => {
   return (
     <Router basename="/">
       <GlobalStyles />
-      <div className="w-full h-full flex items-center justify-center bg-indigo-100" style={{ minHeight: '100vh' }}>
-        <div style={{ width: '390px', height: '844px', position: 'relative', overflow: 'hidden' }}>
+      <div className="w-full min-h-screen flex items-center justify-center bg-indigo-100 p-4">
+        <div
+          style={{
+            width: 'min(100vw - 32px, 420px)',
+            height: 'min(100vh - 32px, 860px)',
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: '28px',
+            boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)',
+          }}
+        >
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/index.html" element={<HomePage />} />

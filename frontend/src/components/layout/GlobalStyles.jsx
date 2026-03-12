@@ -38,10 +38,6 @@ const GlobalStyles = () => {
         margin: 0;
         padding: 0;
         background-color: #e0e7ff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
       }
     `;
     document.head.appendChild(style);
