@@ -11,6 +11,7 @@ const App = () => {
         <div style={{ width: '390px', height: '844px', position: 'relative', overflow: 'hidden' }}>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/index.html" element={<HomePage />} />
           </Routes>
         </div>
       </div>
