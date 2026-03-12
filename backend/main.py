@@ -15,9 +15,10 @@ load_dotenv()
 app = FastAPI(title="Pet Games API")
 
 # Setup CORS to allow frontend connections
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with frontend URL
+    allow_origins=[frontend_origin],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
