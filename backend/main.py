@@ -16,9 +16,14 @@ app = FastAPI(title="Pet Games API")
 
 # Setup CORS to allow frontend connections
 frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+frontend_origin_regex = os.getenv(
+    "FRONTEND_ORIGIN_REGEX",
+    r"^https://pet-games(-[\w-]+)?\.vercel\.app$",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[frontend_origin],
+    allow_origin_regex=frontend_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
